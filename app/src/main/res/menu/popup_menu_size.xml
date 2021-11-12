@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/size128"
+        android:title="Low quality"/>
+    <item android:id="@+id/size256"
+        android:title="Medium quality"/>
+    <item android:id="@+id/size512"
+        android:title="High quality"/>
+    <item android:id="@+id/size1028"
+        android:title="HD quality"/>
+</menu>
