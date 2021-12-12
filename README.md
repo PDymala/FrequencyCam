@@ -8,6 +8,11 @@ You can choose either standard view, frequency or phase. Couple of extra feature
 Only in landscape mode due to opencv.
 
 
+*** 12-12.2021 ***
+Added some functionalities like cam zoom, preview zoom, better quality control. Unfortunately, this was done with the help of camera api 1 instead of 2, that is why, it's another branch. At some moment I will change that one to be default.
+
+
+
 Some images of the app:
 
 
