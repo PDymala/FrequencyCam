@@ -2,6 +2,7 @@ package com.diplabs.frequencycam3;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,12 +24,16 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
+import java.text.DecimalFormat;
+
+import static org.opencv.imgproc.Imgproc.INTER_AREA;
 import static org.opencv.imgproc.Imgproc.INTER_CUBIC;
 import static org.opencv.imgproc.Imgproc.resize;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, PopupMenu.OnMenuItemClickListener {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private static final String TAG = "FreqencyCam3";
     private static final int MY_CAMERA_REQUEST_CODE = 100;
     private int activeCamera = CameraBridgeViewBase.CAMERA_ID_BACK;
@@ -41,15 +46,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int spectrumStatus = 0;
     private int matrixStatus = 0;
     private int rotateStatus = 0;
-    private int size = 512;
-
     ImageButton imageButtonSpectrum;
     ImageButton imageButtonMatrix;
     ImageButton imageButtonSize;
     ImageButton imageButtonRotate;
-//    ImageButton imageButtonFullScreen;
-//    ImageButton imageButtonZoomUp;
-//    ImageButton imageButtonZoomDown;
     ImageButton imageButtonFlash;
     ImageButton imageButtonSave;
     ImageButton imageButtonClose;
@@ -101,65 +101,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         };
 
 
-        try {
-           for (Size s : javaCameraView.getCameraSizes()){
-               Log.i(TAG, "onCreate: "+s.toString());;
-           }
-
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
 
     }
 
 
-    public void showPopupSize(View view) {
-        PopupMenu popupMenu = new PopupMenu(this, view);
-        popupMenu.setOnMenuItemClickListener(this);
-        popupMenu.inflate(R.menu.popup_menu_size);
-        popupMenu.show();
-    }
 
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.size128:
-                size = 128;
-                javaCameraView.setMaxFrameSize(size, size);
-//                javaCameraView.setMinimumHeight(size);
-                javaCameraView.disableView();
-                javaCameraView.enableView();
-                return true;
-
-            case R.id.size256:
-                size = 256;
-                javaCameraView.setMaxFrameSize(size, size);
-//                javaCameraView.setMinimumHeight(size);
-                javaCameraView.disableView();
-                javaCameraView.enableView();
-                return true;
-
-            case R.id.size512:
-                size = 512;
-                javaCameraView.setMaxFrameSize(size, size);
-//                javaCameraView.setMinimumHeight(size);
-                javaCameraView.disableView();
-                javaCameraView.enableView();
-                return true;
-
-            case R.id.size1028:
-                size = 1028;
-                javaCameraView.setMaxFrameSize(size, size);
-//                javaCameraView.setMinimumHeight(size);
-                javaCameraView.disableView();
-                javaCameraView.enableView();
-                return true;
-            default:
-                return false;
-        }
-
-    }
 
 
     @Override
@@ -184,9 +130,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         javaCameraView.setCameraIndex(activeCamera);
         javaCameraView.setVisibility(CameraBridgeViewBase.VISIBLE);
         javaCameraView.setCvCameraViewListener(this);
-     //   javaCameraView.enableFpsMeter();
-        javaCameraView.setMaxFrameSize(size, size);
-//        javaCameraView.setMinimumHeight(size);
+        javaCameraView.enableFpsMeter();
 
     }
 
@@ -196,11 +140,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         imageButtonMatrix = findViewById(R.id.imageButtonMatrix);
         imageButtonSize = findViewById(R.id.imageButtonSize);
         imageButtonRotate = findViewById(R.id.imageButtonRotate);
-//        imageButtonFullScreen = findViewById(R.id.imageButtonFullScreen);
-//        imageButtonZoomUp = findViewById(R.id.imageButtonZoomUp);
-//        imageButtonZoomDown = findViewById(R.id.imageButtonZoomDown);
         imageButtonFlash = findViewById(R.id.imageButtonFlash);
-//        imageButtonSave = findViewById(R.id.imageButtonSave);
         imageButtonClose = findViewById(R.id.imageButtonClose);
 
     }
@@ -255,21 +195,26 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         frame.copyTo(resizeimage);
 
-        //resize do najblizej zadanego wymiaru? jak jest 600 to 512
-//        resize(frame,             // input image
-//                resizeimage,            // result image
-//                new Size(size, size),     // new dimensions
-//                0,
-//                0,
-//                INTER_CUBIC       // interpolation method
-//        );
-//        Log.i(TAG, "onCameraFrame: " + resizeimage.size());
+
+
+
+
+
+
+
         Imgproc.cvtColor(frame, resizeimage, Imgproc.COLOR_RGB2GRAY);
 
+//to dosyć mocno spowalnia, prawei ze 30 do 20kilku fps
+        org.opencv.core.Size qualitySize = new org.opencv.core.Size((int)(resizeimage.height()*(1-qualityFactor)), (int)(resizeimage.width()*(1-qualityFactor)));
+        resize(resizeimage,             // input image
+                resizeimage,            // result image
+                qualitySize,     // new dimensions
+                0,
+                0,
+                INTER_AREA       // interpolation method
+        );
 
-        //potem crop?
-        //Rect roi = new Rect(x, y, width, height);
-        //Mat cropped = new Mat(uncropped, roi);
+
 
 
         boolean rotate = true;
@@ -301,35 +246,27 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
 
-        //i tutaj albo wypluc ten crop albo rozciagniety?
+        //zoom in the middle
+        int cropWidth = (int)((double)resizeimage.width()*(1.0-zoomPreviewFactor));
+        int cropHeight = (int)((double)resizeimage.height()*(1.0-zoomPreviewFactor));
+        int cropCenterX = (int)((resizeimage.width()-cropWidth)/2.0);
+        int cropCenterY = (int)((resizeimage.height()-cropHeight)/2.0);
+        Rect rectCrop = new Rect(cropCenterX, cropCenterY, cropWidth, cropHeight);
+        Mat croppedImage = new Mat(resizeimage, rectCrop); // RELEASE?
+        // end of zoom
 
-        //output image musi miec ten sam wymiar co input. inaczej sie psuje. dlatego DFT na małym nalezy
-        resize(resizeimage,             // input image
-                resizeimage,            // result image
+        //resize of zoomed to initial value
+        resize(croppedImage,             // input image
+                croppedImage,            // result image
                 frame.size(),     // new dimensions
                 0,
                 0,
                 INTER_CUBIC       // interpolation method
         );
-        Log.i(TAG, "onCameraFrame: " + resizeimage.size());
 
-
-//   return dft.getDFT(resizeimage);
-
-        return resizeimage;
+        return croppedImage;
     }
 
-//    public void zoomUp(View view) {
-//        javaCameraView.zoomUp();
-//
-//
-//    }
-//
-//    public void zoomDown(View view) {
-//        javaCameraView.zoomDown();
-//
-//
-//    }
 
     @Override
     public void onCameraViewStarted(int width, int height) {
@@ -386,10 +323,31 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     }
 
+    private double qualityFactor = 0.0;
+    public void qualityButton(View view){
+        qualityFactor = (qualityFactor + 0.2)%1.0;
+        Toast.makeText(this, "Quality factor: " + dec.format(1.0-qualityFactor), Toast.LENGTH_SHORT).show();
+
+    }
+
+    DecimalFormat dec = new DecimalFormat("#0.00");
+    public void zoomUpCamera(View view){
+        javaCameraView.zoomUpCamera();
+        Toast.makeText(this, "Camera zoom: " + dec.format(javaCameraView.getCameraZoom()) , Toast.LENGTH_SHORT).show();
+    }
+
+
+    private double zoomPreviewFactor = 0.0;
+    public void zoomUpPreview(View view){
+            zoomPreviewFactor = (zoomPreviewFactor + 0.2)%1.0;
+        Toast.makeText(this, "Preview zoom: " + dec.format(zoomPreviewFactor), Toast.LENGTH_SHORT).show();
+
+        }
+
 
     public void turnOnOff(View view) throws CameraAccessException {
 
-        javaCameraView.toggleFlashMode();
+        javaCameraView.toggleFlashLight();
     }
 
     public void closeApp(View view) {

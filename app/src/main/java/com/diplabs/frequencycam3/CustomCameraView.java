@@ -6,21 +6,15 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.AttributeSet;
 import android.util.Size;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.SeekBar;
 
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCamera2View;
 import org.opencv.android.JavaCameraView;
 
-import java.util.List;
+import java.text.DecimalFormat;
 
-public class CustomCameraView extends JavaCamera2View  {
+public class CustomCameraView extends JavaCameraView  {
     public CustomCameraView(Context context, int cameraId) {
         super(context, cameraId);
     }
@@ -31,55 +25,82 @@ public class CustomCameraView extends JavaCamera2View  {
 
 
 
-//
-//    public void zoomUp(){
-//
-////        Camera.Parameters params = mCamera.getParameters();
-////        if (params.getZoom() + 10 <= params.getMaxZoom()){
-////            params.setZoom(params.getZoom() +10);
-////            mCamera.setParameters(params);
-////
-////        }
-//
-//    }
-//
-//    public void zoomDown(){
-////        Camera.Parameters params = mCamera.getParameters();
-////        if(params.getZoom() - 10 >= 0) {
-////            params.setZoom(params.getZoom() - 10);
-////            mCamera.setParameters(params);
-////        }
-//    }
-public Size[] getCameraSizes() throws CameraAccessException {
-    CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
-    CameraCharacteristics characteristics = manager.getCameraCharacteristics(manager.getCameraIdList()[0]);
-    StreamConfigurationMap streamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-    Size[] sizes = streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
 
-        return sizes;
-}
+    private int zoomCounter = 0;
+    public void zoomUpCamera(){
 
-boolean enable = true;
-    public void toggleFlashMode() throws CameraAccessException {
+        Camera.Parameters params = mCamera.getParameters();
+        zoomCounter =params.getMaxZoom()/5;
 
-        try {
+        if (params.isZoomSupported()){
 
-                if (enable) {
-                    mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                    enable = false;
-                } else {
-                    mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
-                    enable = true;
-                }
-                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), null, null);
+                params.setZoom((params.getZoom() +zoomCounter)%params.getMaxZoom());
 
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
+                mCamera.setParameters(params);
+
+
+        } else{
+            //not supported
         }
+
     }
 
 
+public double getCameraZoom(){
+    Camera.Parameters params = mCamera.getParameters();
+
+    return ((double)params.getZoom() / (double)params.getMaxZoom());
+}
+
+//public Size[] getCameraSizes() throws CameraAccessException {
+//    CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+//    CameraCharacteristics characteristics = manager.getCameraCharacteristics(manager.getCameraIdList()[0]);
+//    StreamConfigurationMap streamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+//    Size[] sizes = streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
+//
+//        return sizes;
+//}
+
+//boolean enable = true;
+//    public void toggleFlashMode() throws CameraAccessException {
+//
+//        try {
+//
+//                if (enable) {
+//                    mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+//                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+//                    enable = false;
+//                } else {
+//                    mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+//                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+//                    enable = true;
+//                }
+//                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), null, null);
+//
+//        } catch (CameraAccessException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    boolean flashlightOn = false;
+
+    public void toggleFlashLight(){
+
+        Camera.Parameters params = mCamera.getParameters();
+        if (flashlightOn){
+
+            params.setFlashMode(params.FLASH_MODE_OFF);
+            flashlightOn = false;
+
+        } else{
+            params.setFlashMode(params.FLASH_MODE_TORCH);
+            flashlightOn = true;
+
+
+        }
+        mCamera.setParameters(params);
+
+
+    }
 
 }
