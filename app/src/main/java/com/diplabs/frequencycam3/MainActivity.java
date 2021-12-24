@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,8 +24,12 @@ import androidx.core.content.ContextCompat;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.text.DecimalFormat;
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int spectrumStatus = 0;
     private int matrixStatus = 0;
     private int rotateStatus = 0;
+    private boolean stretch = false;
     ImageButton imageButtonSpectrum;
     ImageButton imageButtonMatrix;
     ImageButton imageButtonSize;
@@ -193,18 +199,26 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         dft = new DFT();
         frame = inputFrame.rgba();
 
-        frame.copyTo(resizeimage);
 
 
 
+        //Cutting square in the middle (optimum for DFT)
+        int cropWidthIn = (int)((double)frame.height());
+        int cropHeightIn = (int)((double)frame.height());
+        int cropCenterXIn = (int)((frame.width()-cropWidthIn)/2.0);
+        int cropCenterYIn= (int)((frame.height()-cropHeightIn)/2.0);
+        Rect rectCropIn = new Rect(cropCenterXIn, cropCenterYIn, cropWidthIn, cropHeightIn);
+        Mat croppedImageInput = new Mat(frame, rectCropIn); // RELEASE?
 
 
+        //copy to different Mat
+        croppedImageInput.copyTo(resizeimage);
+
+        //change to grayscale (DFT is only on 1 channeL)
+        Imgproc.cvtColor(resizeimage, resizeimage, Imgproc.COLOR_RGB2GRAY);
 
 
-
-        Imgproc.cvtColor(frame, resizeimage, Imgproc.COLOR_RGB2GRAY);
-
-//to dosyć mocno spowalnia, prawei ze 30 do 20kilku fps
+        //changing image quality before DFT. Smaller = faster but less precise
         org.opencv.core.Size qualitySize = new org.opencv.core.Size((int)(resizeimage.height()*(1-qualityFactor)), (int)(resizeimage.width()*(1-qualityFactor)));
         resize(resizeimage,             // input image
                 resizeimage,            // result image
@@ -215,8 +229,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         );
 
 
-
-
+        //DFT: Amp or Phase or non
         boolean rotate = true;
         boolean matrix = true;
 
@@ -235,8 +248,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         if (spectrumStatus == 0) {
+//
             dft.getDFT(resizeimage, rotate, matrix).copyTo(resizeimage);
             dft.release();
+
+
         } else if (spectrumStatus == 1) {
             dft.getPhase2(resizeimage, rotate, matrix).copyTo(resizeimage);
             dft.release();
@@ -246,25 +262,67 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
 
-        //zoom in the middle
-        int cropWidth = (int)((double)resizeimage.width()*(1.0-zoomPreviewFactor));
-        int cropHeight = (int)((double)resizeimage.height()*(1.0-zoomPreviewFactor));
+        //resize back to square image
+        resize(resizeimage,             // input image
+                resizeimage,            // result image
+                croppedImageInput.size(),     // new dimensions
+                0,
+                0,
+                INTER_AREA       // interpolation method
+        );
+
+
+
+
+        //preview (not camera) zoom in the middle
+        int cropWidth = (int) (resizeimage.width()*(1-zoomPreviewFactor));
+        int cropHeight = (int) (resizeimage.height()*(1-zoomPreviewFactor));
         int cropCenterX = (int)((resizeimage.width()-cropWidth)/2.0);
         int cropCenterY = (int)((resizeimage.height()-cropHeight)/2.0);
         Rect rectCrop = new Rect(cropCenterX, cropCenterY, cropWidth, cropHeight);
         Mat croppedImage = new Mat(resizeimage, rectCrop); // RELEASE?
         // end of zoom
 
-        //resize of zoomed to initial value
+
+
+        // resize to maximum square
         resize(croppedImage,             // input image
                 croppedImage,            // result image
-                frame.size(),     // new dimensions
+                croppedImageInput.size(),     // new dimensions
                 0,
                 0,
-                INTER_CUBIC       // interpolation method
+                INTER_AREA       // interpolation method
         );
 
-        return croppedImage;
+
+
+
+
+        if (stretch){
+            //stretching the square to frame size
+            resize(croppedImage,             // input image
+                    croppedImage,            // result image
+                    frame.size(),     // new dimensions
+                    0,
+                    0,
+                    INTER_CUBIC       // interpolation method
+            );
+            return croppedImage;
+
+
+        } else{
+
+                   //putting our square in the middle of rectangle (input is rectangle) as return image has to be the same size
+        Mat output =  new Mat(frame.size(),resizeimage.type(), new Scalar(0));
+        croppedImage.copyTo(output.submat(new Rect((frame.cols()-croppedImageInput.cols())/2,0,croppedImage.rows(),croppedImage.cols())));
+
+
+        return output;
+
+        }
+
+
+
     }
 
 
@@ -331,9 +389,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     DecimalFormat dec = new DecimalFormat("#0.00");
-    public void zoomUpCamera(View view){
-        javaCameraView.zoomUpCamera();
-        Toast.makeText(this, "Camera zoom: " + dec.format(javaCameraView.getCameraZoom()) , Toast.LENGTH_SHORT).show();
+    public void zoomUpCamera(View view) throws CameraAccessException {
+        javaCameraView.zoomUpCamera2();
+     Toast.makeText(this, "Camera zoom: " + dec.format(javaCameraView.getZoomFloat()) , Toast.LENGTH_SHORT).show();
+
+
     }
 
 
@@ -345,9 +405,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
 
+    public void stretch(View view){
+
+        if (stretch) stretch = false;
+        else stretch = true;
+    }
+
     public void turnOnOff(View view) throws CameraAccessException {
 
-        javaCameraView.toggleFlashLight();
+//        javaCameraView.toggleFlashLight();
+    javaCameraView.toggleFlashMode();
     }
 
     public void closeApp(View view) {

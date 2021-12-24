@@ -5,6 +5,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 import java.util.ArrayList;
@@ -95,17 +96,23 @@ public class DFT {
         // image to
         // optimal size
 
+
+
+
+
+
+
         Core.copyMakeBorder(singleChannel, padded, 0, m - singleChannel.rows(), 0,
-                n - singleChannel.cols(), Core.BORDER_CONSTANT);
+                n - singleChannel.cols(), Core.BORDER_CONSTANT, Scalar.all(0));
 
          planes = new ArrayList<Mat>();
         planes.add(padded);
-        planes.add(Mat.zeros(padded.rows(), padded.cols(), CvType.CV_64FC1));
+        planes.add(Mat.zeros(padded.size(), CvType.CV_64FC1));
 
-         complexI = Mat.zeros(padded.rows(), padded.cols(), CvType.CV_64FC2);
+         complexI = Mat.zeros(padded.size(), CvType.CV_64FC2);
 
          complexI2 = Mat
-                .zeros(padded.rows(), padded.cols(), CvType.CV_64FC2);
+                .zeros(padded.size(), CvType.CV_64FC2);
 
         Core.merge(planes, complexI); // Add to the expanded another plane with
         // zeros
@@ -121,6 +128,7 @@ public class DFT {
         mag = new Mat(planes.get(0).size(), planes.get(0).type());
 
         Core.magnitude(planes.get(0), planes.get(1), mag);// planes[0]
+
         // =
         // magnitude
 
