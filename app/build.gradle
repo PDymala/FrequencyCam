@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdk 33
+    buildToolsVersion '33.0.3'
 
     defaultConfig {
         applicationId "com.diplabs.frequencycam3"
-        minSdkVersion 26
-        targetSdkVersion 30
-        versionCode 3
-        versionName "3.0"
+        minSdkVersion 27
+        targetSdkVersion 33
+        versionCode 4
+        versionName "4.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
