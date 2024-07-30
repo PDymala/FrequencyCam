@@ -6,15 +6,26 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.diplabs.frequencycam3.CustomCameraView
-        android:id="@+id/cameraView1"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:visibility="visible"
+
+
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/adView" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.diplabs.frequencycam3.CustomCameraView
+            android:id="@+id/cameraView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="0dp" />
+
+    </RelativeLayout>
 
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/flexboxLayoutLeft"
@@ -52,15 +63,6 @@
             android:layout_height="wrap_content"
             android:onClick="qualityButton"
             app:srcCompat="@drawable/ic_baseline_image_aspect_ratio_24"
-            tools:layout_editor_absoluteX="4dp"
-            tools:layout_editor_absoluteY="235dp" />
-
-        <ImageButton
-            android:id="@+id/imageButtonStretch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="stretch"
-            app:srcCompat="@drawable/ic_baseline_open_in_full_24"
             tools:layout_editor_absoluteX="4dp"
             tools:layout_editor_absoluteY="235dp" />
 

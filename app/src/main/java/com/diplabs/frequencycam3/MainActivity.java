@@ -2,17 +2,12 @@ package com.diplabs.frequencycam3;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Size;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
-import android.widget.PopupMenu;
-import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,13 +16,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
-import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -44,14 +35,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int activeCamera = CameraBridgeViewBase.CAMERA_ID_BACK;
     private CustomCameraView javaCameraView;// JavaCameraView javaCameraView;
 
-    private BaseLoaderCallback baseLoaderCallback;
     private DFT dft;
     private Mat resizeimage;
     private Mat frame;
     private int spectrumStatus = 0;
     private int matrixStatus = 0;
     private int rotateStatus = 0;
-    private boolean stretch = false;
     ImageButton imageButtonSpectrum;
     ImageButton imageButtonMatrix;
     ImageButton imageButtonSize;
@@ -69,8 +58,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        javaCameraView = (CustomCameraView) findViewById(R.id.cameraView1);//javaCameraView = (JavaCameraView) findViewById(R.id.cameraView1);
+        javaCameraView = findViewById(R.id.cameraView);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+
+        permisions();
+
+
+        initializeButtons();
+
+
+
+    }
+
+
+    private void permisions() {
         // checking if the permission has already been granted
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -81,36 +83,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Log.d(TAG, "Permission prompt");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_CAMERA_REQUEST_CODE);
         }
-
-        initializeButtons();
-
-
-
-        baseLoaderCallback = new BaseLoaderCallback(this) {
-            @Override
-            public void onManagerConnected(int status) {
-                super.onManagerConnected(status);
-
-                switch (status) {
-
-                    case BaseLoaderCallback.SUCCESS:
-                        javaCameraView.enableView();
-                        break;
-                    default:
-                        super.onManagerConnected(status);
-                        break;
-                }
-
-
-            }
-
-        };
-
-
-
     }
-
-
 
 
 
@@ -137,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         javaCameraView.setVisibility(CameraBridgeViewBase.VISIBLE);
         javaCameraView.setCvCameraViewListener(this);
         javaCameraView.enableFpsMeter();
+        javaCameraView.enableView();
 
     }
 
@@ -191,138 +165,93 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         }
     }
-
-
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-//        Log.i(TAG, "onCameraFrame: " + inputFrame.rgba().size());
         dft = new DFT();
-        frame = inputFrame.rgba();
+        Mat frame = inputFrame.rgba();
 
+        // Cutting square in the middle (optimum for DFT)
+        int cropWidthIn = frame.width();
+        int cropHeightIn = frame.height();
+        int cropCenterXIn = (frame.width() - cropWidthIn) / 2;
+        int cropCenterYIn = (frame.height() - cropHeightIn) / 2;
 
+        // Ensure ROI is within bounds
+        if (cropCenterXIn < 0) cropCenterXIn = 0;
+        if (cropCenterYIn < 0) cropCenterYIn = 0;
+        if (cropWidthIn + cropCenterXIn > frame.width()) cropWidthIn = frame.width() - cropCenterXIn;
+        if (cropHeightIn + cropCenterYIn > frame.height()) cropHeightIn = frame.height() - cropCenterYIn;
 
-
-        //Cutting square in the middle (optimum for DFT)
-        int cropWidthIn = (int)((double)frame.height());
-        int cropHeightIn = (int)((double)frame.height());
-        int cropCenterXIn = (int)((frame.width()-cropWidthIn)/2.0);
-        int cropCenterYIn= (int)((frame.height()-cropHeightIn)/2.0);
         Rect rectCropIn = new Rect(cropCenterXIn, cropCenterYIn, cropWidthIn, cropHeightIn);
         Mat croppedImageInput = new Mat(frame, rectCropIn); // RELEASE?
 
+        // Copy to different Mat
+        Mat resizeImage = new Mat();
+        croppedImageInput.copyTo(resizeImage);
 
-        //copy to different Mat
-        croppedImageInput.copyTo(resizeimage);
+        // Change to grayscale (DFT is only on 1 channel)
+        Imgproc.cvtColor(resizeImage, resizeImage, Imgproc.COLOR_RGB2GRAY);
 
-        //change to grayscale (DFT is only on 1 channeL)
-        Imgproc.cvtColor(resizeimage, resizeimage, Imgproc.COLOR_RGB2GRAY);
-
-
-        //changing image quality before DFT. Smaller = faster but less precise
-        org.opencv.core.Size qualitySize = new org.opencv.core.Size((int)(resizeimage.height()*(1-qualityFactor)), (int)(resizeimage.width()*(1-qualityFactor)));
-        resize(resizeimage,             // input image
-                resizeimage,            // result image
-                qualitySize,     // new dimensions
-                0,
-                0,
-                INTER_AREA       // interpolation method
+        // Changing image quality before DFT. Smaller = faster but less precise
+        org.opencv.core.Size qualitySize = new org.opencv.core.Size(
+                resizeImage.width() * (1 - qualityFactor),
+                resizeImage.height() * (1 - qualityFactor)
         );
+        Imgproc.resize(resizeImage, resizeImage, qualitySize, 0, 0, Imgproc.INTER_AREA);
 
-
-        //DFT: Amp or Phase or non
-        boolean rotate = true;
-        boolean matrix = true;
-
-        if (matrixStatus == 0) {
-            matrix = true;
-        } else {
-            matrix = false;
-        }
-
-        if (rotateStatus == 0) {
-            rotate = true;
-
-        } else {
-            rotate = false;
-        }
-
+        // DFT: Amp or Phase or non
+        boolean rotate = (rotateStatus == 0);
+        boolean matrix = (matrixStatus == 0);
 
         if (spectrumStatus == 0) {
-//
-            dft.getDFT(resizeimage, rotate, matrix).copyTo(resizeimage);
+            dft.getDFT(resizeImage, rotate, matrix).copyTo(resizeImage);
             dft.release();
-
-
         } else if (spectrumStatus == 1) {
-            dft.getPhase2(resizeimage, rotate, matrix).copyTo(resizeimage);
+            dft.getPhase2(resizeImage, rotate, matrix).copyTo(resizeImage);
             dft.release();
-        } else {
-
-
         }
 
+        // Resize back to square image
+        Imgproc.resize(resizeImage, resizeImage, croppedImageInput.size(), 0, 0, Imgproc.INTER_AREA);
 
-        //resize back to square image
-        resize(resizeimage,             // input image
-                resizeimage,            // result image
-                croppedImageInput.size(),     // new dimensions
-                0,
-                0,
-                INTER_AREA       // interpolation method
-        );
+        // Preview (not camera) zoom in the middle
+        int cropWidth = (int) (resizeImage.width() * (1 - zoomPreviewFactor));
+        int cropHeight = (int) (resizeImage.height() * (1 - zoomPreviewFactor));
+        int cropCenterX = (resizeImage.width() - cropWidth) / 2;
+        int cropCenterY = (resizeImage.height() - cropHeight) / 2;
 
+        // Ensure ROI is within bounds
+        if (cropCenterX < 0) cropCenterX = 0;
+        if (cropCenterY < 0) cropCenterY = 0;
+        if (cropWidth + cropCenterX > resizeImage.width()) cropWidth = resizeImage.width() - cropCenterX;
+        if (cropHeight + cropCenterY > resizeImage.height()) cropHeight = resizeImage.height() - cropCenterY;
 
-
-
-        //preview (not camera) zoom in the middle
-        int cropWidth = (int) (resizeimage.width()*(1-zoomPreviewFactor));
-        int cropHeight = (int) (resizeimage.height()*(1-zoomPreviewFactor));
-        int cropCenterX = (int)((resizeimage.width()-cropWidth)/2.0);
-        int cropCenterY = (int)((resizeimage.height()-cropHeight)/2.0);
         Rect rectCrop = new Rect(cropCenterX, cropCenterY, cropWidth, cropHeight);
-        Mat croppedImage = new Mat(resizeimage, rectCrop); // RELEASE?
-        // end of zoom
+        Mat croppedImage = new Mat(resizeImage, rectCrop); // RELEASE?
+
+        // Resize to maximum square
+        Imgproc.resize(croppedImage, croppedImage, croppedImageInput.size(), 0, 0, Imgproc.INTER_AREA);
+
+        Mat output;
+
+            // Putting our square in the middle of rectangle (input is rectangle)
+            // as return image has to be the same size
+            output = new Mat(frame.size(), resizeImage.type(), new Scalar(0));
+
+            int submatX = (frame.cols() - croppedImage.cols()) / 2;
+            if (submatX < 0) submatX = 0;
+            if (croppedImage.rows() > frame.rows()) croppedImage = croppedImage.rowRange(0, frame.rows());
+            if (croppedImage.cols() > frame.cols()) croppedImage = croppedImage.colRange(0, frame.cols());
+
+            Rect submatRect = new Rect(submatX, 0, croppedImage.cols(), croppedImage.rows());
+            croppedImage.copyTo(output.submat(submatRect));
 
 
-
-        // resize to maximum square
-        resize(croppedImage,             // input image
-                croppedImage,            // result image
-                croppedImageInput.size(),     // new dimensions
-                0,
-                0,
-                INTER_AREA       // interpolation method
-        );
-
-
-
-
-
-        if (stretch){
-            //stretching the square to frame size
-            resize(croppedImage,             // input image
-                    croppedImage,            // result image
-                    frame.size(),     // new dimensions
-                    0,
-                    0,
-                    INTER_CUBIC       // interpolation method
-            );
-            return croppedImage;
-
-
-        } else{
-
-                   //putting our square in the middle of rectangle (input is rectangle) as return image has to be the same size
-        Mat output =  new Mat(frame.size(),resizeimage.type(), new Scalar(0));
-        croppedImage.copyTo(output.submat(new Rect((frame.cols()-croppedImageInput.cols())/2,0,croppedImage.rows(),croppedImage.cols())));
-
+        // Release Mats to avoid memory leaks
+        croppedImageInput.release();
+        croppedImage.release();
 
         return output;
-
-        }
-
-
-
     }
 
 
@@ -346,16 +275,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     }
 
+
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (OpenCVLoader.initDebug()) {
-            Log.d(TAG, "OpenCV is Configured or Connected successfully.");
-            baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
-        } else {
-            Log.d(TAG, "OpenCV not Working or Loaded.");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
+
+        if (javaCameraView != null) {
+            javaCameraView.enableView();
         }
     }
 
@@ -371,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     }
 
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -380,6 +308,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
     }
+
 
     private double qualityFactor = 0.0;
     public void qualityButton(View view){
@@ -405,11 +334,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
 
-    public void stretch(View view){
-
-        if (stretch) stretch = false;
-        else stretch = true;
-    }
 
     public void turnOnOff(View view) throws CameraAccessException {
 

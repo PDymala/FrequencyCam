@@ -2,29 +2,19 @@ package com.diplabs.frequencycam3;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.AttributeSet;
-import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.math.MathUtils;
 
 import org.opencv.android.JavaCamera2View;
-import org.opencv.android.JavaCameraView;
-
-import java.text.DecimalFormat;
 
 public class CustomCameraView extends JavaCamera2View {
-    public CustomCameraView(Context context, int cameraId) {
-        super(context, cameraId);
-    }
 
     public CustomCameraView(Context context, AttributeSet attrs) {
         super(context, attrs);

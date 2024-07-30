@@ -6,15 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.diplabs.frequencycam3.CustomCameraView
-        android:id="@+id/cameraView1"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:visibility="visible"
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/adView" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.diplabs.frequencycam3.CustomCameraView
+            android:id="@+id/cameraView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="0dp" />
+
+    </RelativeLayout>
 
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/flexboxLayoutLeft"
@@ -42,7 +51,6 @@
             android:id="@+id/imageButtonMatrix"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:onClick="changeMatrixStatus"
 
             app:srcCompat="@drawable/ic_baseline_border_all_24" />
@@ -51,15 +59,16 @@
             android:id="@+id/imageButtonSize"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="showPopupSize"
-            app:srcCompat="@drawable/ic_baseline_image_aspect_ratio_24" />
+            android:onClick="qualityButton"
+            app:srcCompat="@drawable/ic_baseline_image_aspect_ratio_24"
+            tools:layout_editor_absoluteX="4dp"
+            tools:layout_editor_absoluteY="235dp" />
 
         <ImageButton
             android:id="@+id/imageButtonRotate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="changeRotateStatus"
-
             app:srcCompat="@drawable/ic_baseline_rotate_right_24" />
 
         <!--        <ImageButton-->
@@ -79,14 +88,49 @@
         <!--            app:srcCompat="@drawable/ic_baseline_fullscreen_24" />-->
 
 
+    </com.google.android.flexbox.FlexboxLayout>
+
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/flexboxLayoutRight"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#80000000"
+        android:padding="4dp"
+        app:alignContent="stretch"
+        app:alignItems="stretch"
+        app:flexDirection="row"
+        app:justifyContent="space_around"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+
+        <ImageButton
+            android:id="@+id/imageButtonZoomCamera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="zoomUpCamera"
+            app:srcCompat="@drawable/ic_baseline_zoom_in_24"
+            tools:layout_editor_absoluteX="5dp"
+            tools:layout_editor_absoluteY="4dp" />
+
+        <ImageButton
+            android:id="@+id/imageButtonZoomPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="zoomUpPreview"
+            app:srcCompat="@drawable/ic_baseline_zoom_in_24"
+            tools:layout_editor_absoluteX="51dp"
+            tools:layout_editor_absoluteY="4dp" />
+
+
         <ImageButton
             android:id="@+id/imageButtonFlash"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="turnOnOff"
-            app:srcCompat="@drawable/ic_baseline_flash_on_24"
-            tools:layout_editor_absoluteX="283dp"
-            tools:layout_editor_absoluteY="4dp" />
+            app:srcCompat="@drawable/ic_baseline_flash_on_24" />
 
 
         <ImageButton
@@ -94,79 +138,44 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="closeApp"
+            app:srcCompat="@drawable/ic_baseline_close_24" />
 
-            app:srcCompat="@drawable/ic_baseline_close_24"
-            tools:layout_editor_absoluteX="350dp"
-            tools:layout_editor_absoluteY="4dp" />
+
+        <!--&lt;!&ndash;        <ImageButton&ndash;&gt;-->
+        <!--&lt;!&ndash;            android:id="@+id/imageButtonZoomUp"&ndash;&gt;-->
+        <!--&lt;!&ndash;            style="@style/Widget.AppCompat.ImageButton"&ndash;&gt;-->
+        <!--&lt;!&ndash;            android:layout_width="0dp"&ndash;&gt;-->
+        <!--&lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
+        <!--&lt;!&ndash;            android:layout_weight="1"&ndash;&gt;-->
+
+
+        <!--        &lt;!&ndash;        <ImageButton&ndash;&gt;-->
+        <!--        &lt;!&ndash;            android:id="@+id/imageButtonSave"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            android:layout_width="0dp"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            android:layout_weight="1"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            android:clickable="false"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            app:layout_constraintStart_toStartOf="@+id/imageButton3"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            app:layout_constraintTop_toBottomOf="@+id/imageButton6"&ndash;&gt;-->
+        <!--        &lt;!&ndash;            app:srcCompat="@drawable/ic_baseline_save_24" />&ndash;&gt;-->
+
+
+        <!--        <ImageButton-->
+        <!--            android:id="@+id/imageButtonClose"-->
+        <!--            android:layout_width="0dp"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="1"-->
+        <!--            android:onClick="closeApp"-->
+        <!--            app:layout_constraintBottom_toBottomOf="parent"-->
+        <!--            app:layout_constraintEnd_toEndOf="parent"-->
+        <!--            app:layout_constraintStart_toStartOf="@+id/imageButton2"-->
+        <!--            app:layout_constraintTop_toBottomOf="@+id/imageButton4"-->
+        <!--            app:srcCompat="@drawable/ic_baseline_close_24" />-->
 
     </com.google.android.flexbox.FlexboxLayout>
 
 
-    <!--    <com.google.android.flexbox.FlexboxLayout-->
-    <!--        android:id="@+id/flexboxLayoutRight"-->
-    <!--        android:layout_width="70dp"-->
-    <!--        android:layout_height="0dp"-->
-    <!--        android:background="#80000000"-->
-    <!--        android:padding="4dp"-->
-    <!--        app:alignContent="stretch"-->
-    <!--        app:alignItems="stretch"-->
-    <!--        app:flexDirection="column"-->
-    <!--        app:justifyContent="space_around"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent">-->
-
-
-    <!--&lt;!&ndash;        <ImageButton&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:id="@+id/imageButtonZoomUp"&ndash;&gt;-->
-    <!--&lt;!&ndash;            style="@style/Widget.AppCompat.ImageButton"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_width="0dp"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_weight="1"&ndash;&gt;-->
-
-    <!--&lt;!&ndash;            android:onClick="zoomUp"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintStart_toStartOf="parent"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintTop_toTopOf="parent"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:srcCompat="@drawable/ic_baseline_zoom_in_24" />&ndash;&gt;-->
-
-    <!--&lt;!&ndash;        <ImageButton&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:id="@+id/imageButtonZoomDown"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_width="0dp"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:layout_weight="1"&ndash;&gt;-->
-    <!--&lt;!&ndash;            android:onClick="zoomDown"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintStart_toStartOf="parent"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:layout_constraintTop_toBottomOf="@+id/imageButton"&ndash;&gt;-->
-    <!--&lt;!&ndash;            app:srcCompat="@drawable/ic_baseline_zoom_out_24" />&ndash;&gt;-->
-
-
-    <!--        &lt;!&ndash;        <ImageButton&ndash;&gt;-->
-    <!--        &lt;!&ndash;            android:id="@+id/imageButtonSave"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            android:layout_width="0dp"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            android:layout_weight="1"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            android:clickable="false"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            app:layout_constraintStart_toStartOf="@+id/imageButton3"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            app:layout_constraintTop_toBottomOf="@+id/imageButton6"&ndash;&gt;-->
-    <!--        &lt;!&ndash;            app:srcCompat="@drawable/ic_baseline_save_24" />&ndash;&gt;-->
-
-
-    <!--        <ImageButton-->
-    <!--            android:id="@+id/imageButtonClose"-->
-    <!--            android:layout_width="0dp"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:layout_weight="1"-->
-    <!--            android:onClick="closeApp"-->
-    <!--            app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--            app:layout_constraintEnd_toEndOf="parent"-->
-    <!--            app:layout_constraintStart_toStartOf="@+id/imageButton2"-->
-    <!--            app:layout_constraintTop_toBottomOf="@+id/imageButton4"-->
-    <!--            app:srcCompat="@drawable/ic_baseline_close_24" />-->
-
-    <!--    </com.google.android.flexbox.FlexboxLayout>-->
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+
